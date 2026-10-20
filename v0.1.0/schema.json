@@ -1,0 +1,152 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://stac-extensions.github.io/ortho/v0.1.0/schema.json#",
+  "title": "Orthophoto Extension",
+  "description": "STAC Orthophoto Extension for STAC Collections and STAC Items.",
+  "type": "object",
+  "required": [
+    "stac_extensions",
+    "type"
+  ],
+  "properties": {
+    "stac_extensions": {
+      "type": "array",
+      "contains": {
+        "const": "https://stac-extensions.github.io/ortho/v0.1.0/schema.json"
+      }
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "Collection",
+        "Feature"
+      ]
+    },
+    "assets": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/fields"
+      }
+    }
+  },
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "type",
+        "properties"
+      ],
+      "properties": {
+        "type": {
+          "const": "Feature"
+        },
+        "properties": {
+          "$ref": "#/definitions/fields"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": "Collection"
+        },
+        "summaries": {
+          "$ref": "#/definitions/summaries"
+        },
+        "item_assets": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/fields"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/fields"
+        }
+      ]
+    }
+  ],
+  "definitions": {
+    "elevation_model": {
+      "type": "string",
+      "enum": [
+        "surface",
+        "terrain"
+      ]
+    },
+    "leaf_state": {
+      "type": "string",
+      "enum": [
+        "leaf-off",
+        "partial",
+        "leaf-on",
+        "unknown"
+      ]
+    },
+    "ortho:elevation_model": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/definitions/elevation_model"
+      }
+    },
+    "ortho:leaf_state": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/definitions/leaf_state"
+      },
+      "if": {
+        "contains": {
+          "const": "unknown"
+        }
+      },
+      "then": {
+        "maxItems": 1
+      }
+    },
+    "fields": {
+      "type": "object",
+      "properties": {
+        "ortho:elevation_model": {
+          "$ref": "#/definitions/ortho:elevation_model"
+        },
+        "ortho:leaf_state": {
+          "$ref": "#/definitions/ortho:leaf_state"
+        }
+      },
+      "patternProperties": {
+        "^(?!ortho:)": {}
+      },
+      "additionalProperties": false
+    },
+    "summaries": {
+      "type": "object",
+      "properties": {
+        "ortho:elevation_model": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/elevation_model"
+          }
+        },
+        "ortho:leaf_state": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/leaf_state"
+          }
+        }
+      },
+      "patternProperties": {
+        "^(?!ortho:)": {}
+      },
+      "additionalProperties": false
+    }
+  }
+}
