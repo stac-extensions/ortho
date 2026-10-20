@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.1.0] - 2026-10-20
+
 - First release
 
-[Unreleased]: <https://github.com/stac-extensions/ortho/compare/main...HEAD>
+[Unreleased]: <https://github.com/stac-extensions/ortho/compare/v0.1.0...HEAD>
+[v0.1.0]: <https://github.com/stac-extensions/ortho/tree/v0.1.0>

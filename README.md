@@ -1,7 +1,7 @@
 # Orthophoto Extension Specification
 
 - **Title:** Orthophoto
-- **Identifier:** <https://stac-extensions.github.io/ortho/v1.0.0/schema.json>
+- **Identifier:** <https://stac-extensions.github.io/ortho/v0.1.0/schema.json>
 - **Field Name Prefix:** ortho
 - **Scope:** Collection, Item
 - **Extension [Maturity Classification](https://github.com/radiantearth/stac-spec/tree/master/extensions/README.md#extension-maturity):** Proposal
@@ -9,19 +9,8 @@
 
 This document explains the Orthophoto Extension to the [SpatioTemporal Asset Catalog](https://github.com/radiantearth/stac-spec) (STAC) specification.
 
-Orthophotos (orthoimages) are aerial or satellite images that were rectified to a map projection,
-so that they have a uniform scale and can be used like a map.
-Two properties matter to users who search for orthophotos, and no other extension covers them:
-
-- The elevation model used for the rectification:
-  A *true orthophoto* is rectified on a surface model that includes buildings and vegetation,
-  so roofs lie exactly on their footprints and buildings don't lean over streets.
-  A *classic orthophoto* is rectified on a terrain model (bare earth), so elevated objects lean away from the image centre.
-- The leaf state of the vegetation at the time of the acquisition:
-  Leaf-off images show the ground below deciduous trees, leaf-on images show the vegetation.
-
-The fields correspond to the per-tile metadata of national orthophoto programmes,
-e.g. `Bezugsflaeche` and `Belaubungszustand` in the German AdV product standard for digital orthophotos (DOP).
+It describes orthophotos (orthoimages), i.e. aerial or satellite images that are rectified to a map projection,
+with the elevation model used for the rectification and the leaf state of the vegetation.
 
 - Examples:
   - [Item example](examples/item.json): A true orthophoto tile, acquired leaf-off
@@ -60,8 +49,8 @@ They can be provided in Assets if an Item has, for example, a true and a classic
 
 | Value     | Description |
 | --------- | ----------- |
-| `surface` | Rectified on a digital surface model (DSM) that includes buildings and vegetation, e.g. an image-based surface model. Also known as *true orthophoto*. |
-| `terrain` | Rectified on a digital terrain model (DTM) of the bare earth. Also known as *classic orthophoto*. |
+| `surface` | Rectified on a digital surface model (DSM) that includes buildings and vegetation, e.g. an image-based surface model. Also known as *true orthophoto*: roofs lie on their footprints and buildings don't lean over streets. |
+| `terrain` | Rectified on a digital terrain model (DTM) of the bare earth. Also known as *classic orthophoto*: elevated objects lean away from the image centre. |
 
 If the elevation model is not known, the field is omitted. It is never an empty array.
 The elevation model itself can be linked with the relation types `surface-model` and `elevation-model`
@@ -79,6 +68,23 @@ of the [Accuracy extension](https://github.com/stac-extensions/accuracy).
 The value `unknown` makes the absence of the information explicit,
 so that clients can tell it apart from data that doesn't use this field.
 It can't be combined with other values: `["unknown"]` is valid, `["leaf-off", "unknown"]` is not.
+
+## Mapping from other standards
+
+### AdV product standard for digital orthophotos (Germany)
+
+The [AdV](https://www.adv-online.de) product and quality standard for digital orthophotos (DOP) defines per-tile metadata
+that the German state survey offices publish with their orthophotos:
+
+| AdV field           | AdV value             | Field                   | Value      |
+| ------------------- | --------------------- | ----------------------- | ---------- |
+| `Bezugsflaeche`     | `bDOM`                | `ortho:elevation_model` | `surface`  |
+| `Bezugsflaeche`     | `ATKIS-DGM`           | `ortho:elevation_model` | `terrain`  |
+| `Belaubungszustand` | `0` (no information)  | `ortho:leaf_state`      | `unknown`  |
+| `Belaubungszustand` | `1`                   | `ortho:leaf_state`      | `leaf-off` |
+| `Belaubungszustand` | `2`                   | `ortho:leaf_state`      | `partial`  |
+| `Belaubungszustand` | `3`                   | `ortho:leaf_state`      | `leaf-on`  |
+| `Bildflugnummer`    | e.g. `1428/24 Höxter` | `mission`               | as is      |
 
 ## Best Practices
 
