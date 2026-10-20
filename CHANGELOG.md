@@ -7,14 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+- First release
 
-### Changed
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-[Unreleased]: <https://github.com/stac-extensions/template/compare/v0.1.0...HEAD>
+[Unreleased]: <https://github.com/stac-extensions/ortho/compare/main...HEAD>

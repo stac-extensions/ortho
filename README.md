@@ -1,19 +1,31 @@
-# Template Extension Specification
+# Orthophoto Extension Specification
 
-- **Title:** Template
-- **Identifier:** <https://stac-extensions.github.io/template/v0.1.0/schema.json>
-- **Field Name Prefix:** template
-- **Scope:** Catalog, Collection, Item
+- **Title:** Orthophoto
+- **Identifier:** <https://stac-extensions.github.io/ortho/v1.0.0/schema.json>
+- **Field Name Prefix:** ortho
+- **Scope:** Collection, Item
 - **Extension [Maturity Classification](https://github.com/radiantearth/stac-spec/tree/master/extensions/README.md#extension-maturity):** Proposal
-- **Owner**: @your-gh-handles @person2
+- **Owner**: @m-mohr
 
-This document explains the Template Extension to the [SpatioTemporal Asset Catalog](https://github.com/radiantearth/stac-spec) (STAC) specification.
+This document explains the Orthophoto Extension to the [SpatioTemporal Asset Catalog](https://github.com/radiantearth/stac-spec) (STAC) specification.
 
-This is the place to add a short introduction.
+Orthophotos (orthoimages) are aerial or satellite images that were rectified to a map projection,
+so that they have a uniform scale and can be used like a map.
+Two properties matter to users who search for orthophotos, and no other extension covers them:
+
+- The elevation model used for the rectification:
+  A *true orthophoto* is rectified on a surface model that includes buildings and vegetation,
+  so roofs lie exactly on their footprints and buildings don't lean over streets.
+  A *classic orthophoto* is rectified on a terrain model (bare earth), so elevated objects lean away from the image centre.
+- The leaf state of the vegetation at the time of the acquisition:
+  Leaf-off images show the ground below deciduous trees, leaf-on images show the vegetation.
+
+The fields correspond to the per-tile metadata of national orthophoto programmes,
+e.g. `Bezugsflaeche` and `Belaubungszustand` in the German AdV product standard for digital orthophotos (DOP).
 
 - Examples:
-  - [Item example](examples/item.json): Shows the basic usage of the extension in a STAC Item
-  - [Collection example](examples/collection.json): Shows the basic usage of the extension in a STAC Collection
+  - [Item example](examples/item.json): A true orthophoto tile, acquired leaf-off
+  - [Collection example](examples/collection.json): A collection of orthophotos with summaries
 - [JSON Schema](json-schema/schema.json)
 - [Changelog](./CHANGELOG.md)
 
@@ -21,43 +33,65 @@ This is the place to add a short introduction.
 
 The fields in the table below can be used in these parts of STAC documents:
 
-- [x] Catalogs
+- [ ] Catalogs
 - [x] Collections
 - [x] Item Properties (incl. Summaries in Collections)
-- [x] Assets (for both Collections and Items, incl. Item Asset Definitions in Collections and Asset Templates)
-- [x] Links (incl. Link Templates)
-- [x] Bands
+- [x] Assets (for both Collections and Items, incl. Item Asset Definitions in Collections)
+- [ ] Links
 
-| Field Name           | Type                      | Description                                  |
-| -------------------- | ------------------------- | -------------------------------------------- |
-| template:new_field   | string                    | **REQUIRED**. Describe the required field... |
-| template:xyz         | [XYZ Object](#xyz-object) | Describe the field...                        |
-| template:another_one | \[number]                 | Describe the field...                        |
+| Field Name            | Type       | Description |
+| --------------------- | ---------- | ----------- |
+| ortho:elevation_model | \[string] | The types of elevation model that the image was rectified on: `surface` (true orthophoto) and/or `terrain` (classic orthophoto). |
+| ortho:leaf_state      | \[string] | The leaf states of the vegetation at the time of the acquisition: `leaf-off`, `partial` and/or `leaf-on`, or `unknown`. |
+
+Both fields are arrays with at least one value and no duplicates.
+They usually have one value.
+They have several values if the image combines parts of different kinds,
+e.g. a mosaic of tiles of which some are true and some are classic orthophotos.
+Arrays are used even for a single value, so that clients and queries can rely on one data type,
+e.g. `a_contains(ortho:elevation_model, 'surface')` in [CQL2](https://docs.ogc.org/is/21-065r2/21-065r2.html).
+
+The fields are usually provided in the Item Properties.
+They can be provided in Assets if an Item has, for example, a true and a classic orthophoto as separate assets.
 
 ### Additional Field Information
 
-#### template:new_field
+#### ortho:elevation_model
 
-This is a much more detailed description of the field `template:new_field`...
+| Value     | Description |
+| --------- | ----------- |
+| `surface` | Rectified on a digital surface model (DSM) that includes buildings and vegetation, e.g. an image-based surface model. Also known as *true orthophoto*. |
+| `terrain` | Rectified on a digital terrain model (DTM) of the bare earth. Also known as *classic orthophoto*. |
 
-### XYZ Object
+If the elevation model is not known, the field is omitted. It is never an empty array.
+The elevation model itself can be linked with the relation types `surface-model` and `elevation-model`
+of the [Accuracy extension](https://github.com/stac-extensions/accuracy).
 
-This is the introduction for the purpose and the content of the XYZ Object...
+#### ortho:leaf_state
 
-| Field Name | Type   | Description                                  |
-| ---------- | ------ | -------------------------------------------- |
-| x          | number | **REQUIRED**. Describe the required field... |
-| y          | number | **REQUIRED**. Describe the required field... |
-| z          | number | **REQUIRED**. Describe the required field... |
+| Value      | Description |
+| ---------- | ----------- |
+| `leaf-off` | Deciduous vegetation without leaves, usually acquired in early spring. |
+| `partial`  | Deciduous vegetation partially in leaf. |
+| `leaf-on`  | Deciduous vegetation in full leaf, usually acquired in summer. |
+| `unknown`  | The leaf state was not recorded. |
 
-## Relation types
+The value `unknown` makes the absence of the information explicit,
+so that clients can tell it apart from data that doesn't use this field.
+It can't be combined with other values: `["unknown"]` is valid, `["leaf-off", "unknown"]` is not.
 
-The following types should be used as applicable `rel` types in the
-[Link Object](https://github.com/radiantearth/stac-spec/tree/master/item-spec/item-spec.md#link-object).
+## Best Practices
 
-| Type           | Description                           |
-| -------------- | ------------------------------------- |
-| fancy-rel-type | This link points to a fancy resource. |
+Other information that is commonly recorded for orthophotos is provided in existing fields:
+
+| Information                 | Field |
+| --------------------------- | ----- |
+| Acquisition (flight) date   | `datetime`, `start_datetime` and `end_datetime` ([Common Metadata](https://github.com/radiantearth/stac-spec/blob/master/commons/common-metadata.md#date-and-time)) |
+| Flight campaign or project  | `mission` ([Common Metadata](https://github.com/radiantearth/stac-spec/blob/master/commons/common-metadata.md#instrument)), e.g. the flight number of the campaign |
+| Camera                      | `instruments` ([Common Metadata](https://github.com/radiantearth/stac-spec/blob/master/commons/common-metadata.md#instrument)) |
+| Ground sample distance      | `gsd` ([Common Metadata](https://github.com/radiantearth/stac-spec/blob/master/commons/common-metadata.md#instrument)) |
+| Positional accuracy         | `accuracy:geometric_x_stddev` and `accuracy:geometric_y_stddev` ([Accuracy extension](https://github.com/stac-extensions/accuracy)) |
+| Spectral bands              | `bands` with `eo:common_name`, e.g. `red`, `green`, `blue` and `nir` ([EO extension](https://github.com/stac-extensions/eo)) |
 
 ## Contributing
 
